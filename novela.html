@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego RomCom - Escuela</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+        }
+
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background-color: #000;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            display: none;
+        }
+
+        /* Pantalla de inicio */
+        #start-screen {
+            position: absolute;
+            width: 800px;
+            height: 600px;
+            background-color: #2b2b36;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            z-index: 100;
+        }
+
+        #start-screen h1 {
+            color: #ff7eb3;
+            margin-bottom: 20px;
+            font-size: 3em;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+        }
+
+        #start-screen input {
+            padding: 10px;
+            font-size: 1.2em;
+            border-radius: 5px;
+            border: none;
+            margin-bottom: 20px;
+            width: 50%;
+            text-align: center;
+        }
+
+        #start-screen button {
+            padding: 12px 30px;
+            font-size: 1.2em;
+            background-color: #ff7eb3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        #start-screen button:hover {
+            background-color: #ff529a;
+        }
+
+        /* Capas del juego */
+        #background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            transition: background-image 0.5s ease-in-out;
+        }
+
+        #character {
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            height: 85%; 
+            width: auto;
+            transition: opacity 0.3s;
+        }
+
+        /* Indicador de Ubicación */
+        #location-box {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(20, 20, 30, 0.9);
+            color: #fff;
+            padding: 8px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            border-left: 5px solid #ff7eb3;
+            border-radius: 0 5px 5px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 10;
+        }
+
+        #ui-layer {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        #name-box {
+            background: rgba(20, 20, 30, 0.9);
+            color: #ff7eb3;
+            padding: 5px 20px;
+            width: fit-content;
+            font-weight: bold;
+            font-size: 22px;
+            border: 2px solid #ff7eb3;
+            border-bottom: none;
+            border-radius: 10px 10px 0 0;
+            display: none; 
+        }
+
+        #dialogue-box {
+            background: rgba(20, 20, 30, 0.9);
+            color: #fff;
+            padding: 20px;
+            height: 110px;
+            font-size: 19px;
+            border: 2px solid #ff7eb3;
+            border-radius: 0 10px 10px 10px;
+            cursor: pointer;
+            user-select: none;
+            line-height: 1.4;
+        }
+
+        #dialogue-box:hover {
+            background: rgba(30, 30, 40, 0.95);
+        }
+
+        #choices-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 70%;
+            display: none;
+            z-index: 20;
+        }
+
+        .choice-btn {
+            background: rgba(255, 126, 179, 0.9);
+            color: #fff;
+            border: 2px solid #fff;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            border-radius: 8px;
+            transition: 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .choice-btn:hover {
+            background: #fff;
+            color: #ff7eb3;
+            border-color: #ff7eb3;
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="bg-music" loop>
+        <source src="musica.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="start-screen">
+        <h1>Tardes de Cerezo</h1>
+        <p style="margin-bottom: 20px; font-size: 1.2em;">Ingresa tu nombre para comenzar la historia</p>
+        <input type="text" id="player-name" placeholder="Tu nombre..." autocomplete="off">
+        <button onclick="startGame()">Comenzar Juego</button>
+    </div>
+
+    <div id="game-container">
+        <div id="background" style="background-color: #4a5568;"></div> 
+        <img id="character" src="" alt="" style="display: none;">
+        
+        <!-- NUEVO: Caja de Ubicación -->
+        <div id="location-box">Ubicación</div>
+
+        <div id="choices-container"></div>
+
+        <div id="ui-layer">
+            <div id="name-box">Nombre</div>
+            <div id="dialogue-box" onclick="advanceStory()">...</div>
+        </div>
+    </div>
+
+    <script>
+        let playerName = "Prota"; 
+        
+        // --- LA HISTORIA ADAPTADA AL NUEVO FONDO DE LA ESCUELA ---
+// --- LA HISTORIA ACTUALIZADA CON TUS NUEVOS ARCHIVOS ---
+// --- LA HISTORIA (ACTUALIZADA CON EMOCIONES Y FONDOS EXACTOS) ---
+// --- LA HISTORIA (ACTUALIZADA CON LOS NUEVOS FONDOS Y CARA SONROJADA) ---
+// --- LA HISTORIA: DÍA 1 + DÍA 2 (TRIÁNGULO AMOROSO) ---
+// --- LA HISTORIA COMPLETA (DÍA 1, DÍA 2 Y DÍA 3 FESTIVAL) ---
+// --- LA HISTORIA COMPLETA Y FINAL (DÍA 1, DÍA 2 Y DÍA 3) ---
+        const story = {
+            // --- DÍA 1 ---
+            "start": { location: "Patio de la Escuela", speaker: "", text: "Las clases por fin terminaron. El sol de la tarde proyecta una enorme sombra diagonal sobre el patio de tierra.", bg: "imagenes/fondo_calle.jpg", sprite: "", next: "esc2" },
+            "esc2": { location: "Patio de la Escuela", speaker: "{nombre}", text: "Qué paz... Los cerezos en la colina están preciosos hoy.", bg: "imagenes/fondo_calle.jpg", sprite: "", next: "esc3" },
+            "esc3": { location: "Zona de Juegos (Neumáticos)", speaker: "", text: "(Me acerco a la zona donde están los neumáticos semienterrados para estirar un poco las piernas, cuando de repente...)", bg: "imagenes/Zona_juegos_neumaticos.jpg", sprite: "", next: "esc4" },
+            "esc4": { location: "Zona de Juegos (Neumáticos)", speaker: "Manhattan Cafe", text: "¡Bú! ¿Qué haces aquí solo, {nombre}?", bg: "imagenes/Zona_juegos_neumaticos.jpg", sprite: "imagenes/Manhattan_Cafe_Malicia.png", next: "esc5" },
+            "esc5": { location: "Zona de Juegos (Neumáticos)", speaker: "{nombre}", text: "¡Cafe! Casi me matas del susto. ¿Tú no deberías estar en tu club en el edificio principal?", bg: "imagenes/Zona_juegos_neumaticos.jpg", sprite: "imagenes/Manhattan_Cafe_Confusion.png", next: "esc6" },
+            "esc6": { location: "Zona de Juegos (Neumáticos)", speaker: "Manhattan Cafe", text: "Terminamos temprano. Te vi desde la ventana del tercer piso del edificio amarillo, así que bajé corriendo a saludarte.", bg: "imagenes/Zona_juegos_neumaticos.jpg", sprite: "imagenes/Manhattan_Cafe_Feliz.png", next: "decision1" },
+            "decision1": {
+                location: "Zona de Juegos (Neumáticos)", speaker: "Sistema", text: "¿Cómo reaccionas?", bg: "imagenes/Zona_juegos_neumaticos.jpg", sprite: "imagenes/Manhattan_Cafe_Feliz.png",
+                choices: [
+                    { text: "Burlarte de que vino corriendo.", next: "ruta_burla" },
+                    { text: "Invitarla a sentarse en las escaleras.", next: "ruta_amable" }
+                ]
+            },
+            "ruta_burla": { location: "Zona de Juegos (Neumáticos)", speaker: "{nombre}", text: "Vaya, bajaste tres pisos corriendo solo para verme. Debes estar muy obsesionada conmigo.", bg: "imagenes/Zona_juegos_neumaticos.jpg", sprite: "imagenes/Manhattan_Cafe.png", next: "ruta_burla2" },
+            "ruta_burla2": { location: "Zona de Juegos (Neumáticos)", speaker: "Manhattan Cafe", text: "¡No te creas tanto, tonto! Solo quería asegurarme de que no estabas haciendo nada raro.", bg: "imagenes/Zona_juegos_neumaticos.jpg", sprite: "imagenes/Manhattan_Cafe_Triste.png", next: "union1" },
+            "ruta_amable": { location: "Zona de Juegos (Neumáticos)", speaker: "{nombre}", text: "Me alegra que bajaras. Estoy un poco cansado, ¿vamos a sentarnos a las escaleras de emergencia?", bg: "imagenes/Zona_juegos_neumaticos.jpg", sprite: "imagenes/Manhattan_Cafe_Feliz.png", next: "ruta_amable2" },
+            "ruta_amable2": { location: "Zona de Juegos (Neumáticos)", speaker: "Manhattan Cafe", text: "¡Claro! La verdad es que me quedé sin aire bajando tan rápido...", bg: "imagenes/Zona_juegos_neumaticos.jpg", sprite: "imagenes/Manhattan_Cafe_Feliz.png", next: "union1" },
+            "union1": { location: "Escaleras del Edificio Amarillo", speaker: "", text: "Caminamos hacia las escaleras y nos sentamos en el primer escalón para descansar.", bg: "imagenes/Escaleras_Edificio_Amarilla.jpg", sprite: "", next: "union2" },
+            "union2": { location: "Escaleras del Edificio Amarillo", speaker: "Manhattan Cafe", text: "Oye, {nombre}... ¿Ya pensaste qué vas a hacer para el festival de primavera?", bg: "imagenes/Escaleras_Edificio_Amarilla.jpg", sprite: "imagenes/Manhattan_Cafe.png", next: "union3" },
+            "union3": { location: "Escaleras del Edificio Amarillo", speaker: "{nombre}", text: "Aún no. Probablemente solo ayude a organizar las gradas de la cancha.", bg: "imagenes/Escaleras_Edificio_Amarilla.jpg", sprite: "imagenes/Manhattan_Cafe.png", next: "union4" },
+            "union4": { location: "Escaleras del Edificio Amarillo", speaker: "Manhattan Cafe", text: "Qué aburrido. Deberías venir a ver la presentación de mi club. Me he esforzado mucho practicando.", bg: "imagenes/Escaleras_Edificio_Amarilla.jpg", sprite: "imagenes/Manhattan_Cafe_Triste.png", next: "decision2" },
+            "decision2": {
+                location: "Escaleras del Edificio Amarillo", speaker: "Sistema", text: "¿Qué le respondes a Cafe?", bg: "imagenes/Escaleras_Edificio_Amarilla.jpg", sprite: "imagenes/Manhattan_Cafe_Triste.png",
+                choices: [
+                    { text: "Prometer que irás a verla.", next: "ruta_promesa" },
+                    { text: "Hacerte el difícil.", next: "ruta_dificil" }
+                ]
+            },
+            "ruta_promesa": { location: "Escaleras del Edificio Amarillo", speaker: "{nombre}", text: "Estaré ahí en primera fila. No me lo perdería por nada.", bg: "imagenes/Escaleras_Edificio_Amarilla.jpg", sprite: "imagenes/Manhattan_Cafe_Feliz.png", next: "ruta_promesa2" },
+            "ruta_promesa2": { location: "Escaleras del Edificio Amarillo", speaker: "Manhattan Cafe", text: "¿De verdad? Más te vale... si no vas, no te hablaré por un mes.", bg: "imagenes/Escaleras_Edificio_Amarilla.jpg", sprite: "imagenes/Manhattan_Cafe_Malicia.png", next: "atardecer" },
+            "ruta_dificil": { location: "Escaleras del Edificio Amarillo", speaker: "{nombre}", text: "No sé, dependerá de si venden buena comida en los puestos ese día.", bg: "imagenes/Escaleras_Edificio_Amarilla.jpg", sprite: "imagenes/Manhattan_Cafe_Confusion.png", next: "ruta_dificil2" },
+            "ruta_dificil2": { location: "Escaleras del Edificio Amarillo", speaker: "Manhattan Cafe", text: "¡Idiota! Solo piensas con el estómago. Bueno... te compraré algo si vienes, ¿trato?", bg: "imagenes/Escaleras_Edificio_Amarilla.jpg", sprite: "imagenes/Manhattan_Cafe_Triste.png", next: "atardecer" },
+            "atardecer": { location: "Puerta Principal de la Escuela", speaker: "", text: "El tiempo pasa volando mientras hablamos. El sol comienza a ocultarse detrás del edificio de aulas.", bg: "imagenes/Puerta_Principal_Escuela.jpg", sprite: "", next: "atardecer2" },
+            "atardecer2": { location: "Puerta Principal de la Escuela", speaker: "Manhattan Cafe", text: "Vaya, se hizo tarde muy rápido. El guardia nos va a regañar si no nos vamos.", bg: "imagenes/Puerta_Principal_Escuela.jpg", sprite: "imagenes/Manhattan_Cafe.png", next: "atardecer3" },
+            "atardecer3": { location: "Puerta Principal de la Escuela", speaker: "{nombre}", text: "Sí, vamos. Te acompañaré a tu casa, los cerezos se ven geniales en esta ruta.", bg: "imagenes/Puerta_Principal_Escuela.jpg", sprite: "imagenes/Manhattan_Cafe_Feliz.png", next: "atardecer4" },
+            "atardecer4": { location: "Camino a Casa", speaker: "Manhattan Cafe", text: "Gracias, {nombre}... Me alegra haber bajado a verte hoy.", bg: "imagenes/Camino_A_Casa.jpg", sprite: "imagenes/Manhattan_Cafe_Feliz.png", next: "decision_final" },
+            "decision_final": {
+                location: "Camino a Casa", speaker: "Sistema", text: "Última decisión del día 1:", bg: "imagenes/Camino_A_Casa.jpg", sprite: "imagenes/Manhattan_Cafe_Feliz.png",
+                choices: [
+                    { text: "Tomarla de la mano.", next: "final_bueno" },
+                    { text: "Sonreír y caminar a su lado.", next: "final_normal" }
+                ]
+            },
+            "final_bueno": { location: "Camino a Casa", speaker: "", text: "Sin decir nada, entrelazo mi mano con la suya mientras caminamos bajo los pétalos que caen.", bg: "imagenes/Camino_A_Casa.jpg", sprite: "imagenes/Manhattan_Cafe_Sonrojada.png", next: "final_bueno2" },
+            "final_bueno2": { location: "Camino a Casa", speaker: "Manhattan Cafe", text: "Supongo que... podemos caminar así un rato.", bg: "imagenes/Camino_A_Casa.jpg", sprite: "imagenes/Manhattan_Cafe_Sonrojada.png", next: "dia2_inicio" },
+            "final_normal": { location: "Camino a Casa", speaker: "{nombre}", text: "Yo también me divertí, Cafe. Mañana nos vemos en clase.", bg: "imagenes/Camino_A_Casa.jpg", sprite: "imagenes/Manhattan_Cafe_Feliz.png", next: "final_normal2" },
+            "final_normal2": { location: "Camino a Casa", speaker: "Manhattan Cafe", text: "¡Claro! No llegues tarde de nuevo.", bg: "imagenes/Camino_A_Casa.jpg", sprite: "imagenes/Manhattan_Cafe_Feliz.png", next: "dia2_inicio" },
+
+            // --- DÍA 2: LA LLEGADA DE TACHYON ---
+            "dia2_inicio": { location: "Pasillo de la Escuela", speaker: "", text: "AL DÍA SIGUIENTE... \nCamino tranquilamente por los pasillos durante el receso. A lo lejos, veo una figura conocida.", bg: "imagenes/Pasillo_Escuela.jpg", sprite: "", next: "dia2_esc2" },
+            "dia2_esc2": { location: "Pasillo de la Escuela", speaker: "{nombre}", text: "¡Oye, Cafe! ¿Vas a la cafetería?", bg: "imagenes/Pasillo_Escuela.jpg", sprite: "imagenes/Manhattan_Cafe.png", next: "dia2_esc3" },
+            "dia2_esc3": { location: "Pasillo de la Escuela", speaker: "Manhattan Cafe", text: "Oh, {nombre}. Sí, iba a comprar un café antes de ir a leer. ¿Quieres venir...?", bg: "imagenes/Pasillo_Escuela.jpg", sprite: "imagenes/Manhattan_Cafe_Feliz.png", next: "dia2_esc4" },
+            "dia2_esc4": { location: "Pasillo de la Escuela", speaker: "Voz Misteriosa", text: "¡ALTO AHÍ, SUJETOS DE PRUEBA NÚMERO 1 Y 2!", bg: "imagenes/Pasillo_Escuela.jpg", sprite: "imagenes/Manhattan_Cafe_Confusion.png", next: "dia2_esc5" },
+            "dia2_esc5": { location: "Pasillo de la Escuela", speaker: "", text: "Antes de que Cafe termine la frase, una chica con bata blanca sale derrapando de un aula cercana, interponiéndose entre nosotros.", bg: "imagenes/Pasillo_Escuela.jpg", sprite: "imagenes/Agnes_Tachyon_Sonrisa.png", next: "dia2_esc6" },
+            "dia2_esc6": { location: "Pasillo de la Escuela", speaker: "Agnes Tachyon", text: "¡Qué maravilla encontrarlos juntos! ¡El destino me sonríe! Necesito sus cuerpos... para la ciencia, claro.", bg: "imagenes/Pasillo_Escuela.jpg", sprite: "imagenes/Agnes_Tachyon_Emocionada.png", next: "dia2_esc7" },
+            "dia2_esc7": { location: "Pasillo de la Escuela", speaker: "Manhattan Cafe", text: "Tachyon... no otra vez, por favor. Ya te dije que no beberé más de tus tés radiactivos.", bg: "imagenes/Pasillo_Escuela.jpg", sprite: "imagenes/Manhattan_Cafe_Triste.png", next: "dia2_esc8" },
+            "dia2_esc8": { location: "Pasillo de la Escuela", speaker: "Agnes Tachyon", text: "¡Tonterías! ¡He perfeccionado la fórmula! ¡Vamos, al laboratorio! ¡Rápido, rápido!", bg: "imagenes/Pasillo_Escuela.jpg", sprite: "imagenes/Agnes_Tachyon_Sonrisa.png", next: "dia2_lab1" },
+            "dia2_lab1": { location: "Laboratorio de Ciencias", speaker: "", text: "Sin darnos tiempo a responder, Tachyon nos arrastra por las mangas hasta su territorio.", bg: "imagenes/Laboratorio_Ciencias.jpg", sprite: "", next: "dia2_lab2" },
+            "dia2_lab2": { location: "Laboratorio de Ciencias", speaker: "Agnes Tachyon", text: "Miren esto. He destilado la esencia del rendimiento puro. Es color... bueno, púrpura fosforescente, pero el sabor es fascinante.", bg: "imagenes/Laboratorio_Ciencias.jpg", sprite: "imagenes/Agnes_Tachyon_Emocionada.png", next: "dia2_lab3" },
+            "dia2_lab3": { location: "Laboratorio de Ciencias", speaker: "Manhattan Cafe", text: "{nombre}, no la mires a los ojos o te convencerá. Vámonos de aquí.", bg: "imagenes/Laboratorio_Ciencias.jpg", sprite: "imagenes/Manhattan_Cafe_Celosa.png", next: "dia2_lab4" },
+            "dia2_lab4": { location: "Laboratorio de Ciencias", speaker: "Agnes Tachyon", text: "¿Vas a dejar que ella decida por ti? ¡Un verdadero investigador abraza lo desconocido! ¿Qué dices, {nombre}?", bg: "imagenes/Laboratorio_Ciencias.jpg", sprite: "imagenes/Agnes_Tachyon_Sorprendida.png", next: "dia2_decision1" },
+            "dia2_decision1": {
+                location: "Laboratorio de Ciencias", speaker: "Sistema", text: "Estás atrapado en medio de las dos. ¿Qué haces?", bg: "imagenes/Laboratorio_Ciencias.jpg", sprite: "",
+                choices: [
+                    { text: "Beber la poción de Tachyon.", next: "ruta_tachyon" },
+                    { text: "Hacerle caso a Cafe y negarte.", next: "ruta_cafe" }
+                ]
+            },
+            
+            // --- RAMA TACHYON ---
+            "ruta_tachyon": { location: "Laboratorio de Ciencias", speaker: "{nombre}", text: "Bueno... solo un sorbo. ¿Qué es lo peor que puede pasar?", bg: "imagenes/Laboratorio_Ciencias.jpg", sprite: "imagenes/Agnes_Tachyon_Sonrisa.png", next: "ruta_tachyon2" },
+            "ruta_tachyon2": { location: "Laboratorio de Ciencias", speaker: "Agnes Tachyon", text: "¡Ese es el espíritu! ¡Sabía que había un científico dormido dentro de ti!", bg: "imagenes/Laboratorio_Ciencias.jpg", sprite: "imagenes/Agnes_Tachyon_Emocionada.png", next: "ruta_tachyon3" },
+            "ruta_tachyon3": { location: "Laboratorio de Ciencias", speaker: "Manhattan Cafe", text: "Eres un tonto... si empiezas a brillar en la oscuridad, no me hables.", bg: "imagenes/Laboratorio_Ciencias.jpg", sprite: "imagenes/Manhattan_Cafe_Celosa.png", next: "ruta_tachyon4" },
+            "ruta_tachyon4": { location: "Laboratorio de Ciencias", speaker: "", text: "Bebo el líquido. Sabe a... ¿fresas con batería de auto? De repente, siento un exceso de energía abrumador.", bg: "imagenes/Laboratorio_Ciencias.jpg", sprite: "", next: "dia2_tarde" },
+            
+            // --- RAMA CAFE ---
+            "ruta_cafe": { location: "Laboratorio de Ciencias", speaker: "{nombre}", text: "Lo siento, Tachyon. Hoy valoro mi salud gástrica. Le haré caso a Cafe.", bg: "imagenes/Laboratorio_Ciencias.jpg", sprite: "imagenes/Manhattan_Cafe_Feliz.png", next: "ruta_cafe2" },
+            "ruta_cafe2": { location: "Laboratorio de Ciencias", speaker: "Manhattan Cafe", text: "Ves, ella es la única loca aquí. Vámonos a la cafetería.", bg: "imagenes/Laboratorio_Ciencias.jpg", sprite: "imagenes/Manhattan_Cafe_Malicia.png", next: "ruta_cafe3" },
+            "ruta_cafe3": { location: "Laboratorio de Ciencias", speaker: "Agnes Tachyon", text: "¡Traición! ¡Cobardía científica! Me vengaré, {nombre}, ¡algún día probarás mis creaciones!", bg: "imagenes/Laboratorio_Ciencias.jpg", sprite: "imagenes/Agnes_Tachyon_Sorprendida.png", next: "dia2_tarde" },
+
+            // --- DÍA 2: EL ALMACÉN (CONVERGENCIA) ---
+            "dia2_tarde": { location: "Almacén del Gimnasio", speaker: "", text: "HORAS MÁS TARDE...\nEl comité del festival nos obligó a los tres a limpiar el viejo almacén del gimnasio como 'voluntariado'.", bg: "imagenes/Almacen_Gimnasio.jpg", sprite: "", next: "almacen2" },
+            "almacen2": { location: "Almacén del Gimnasio", speaker: "Manhattan Cafe", text: "Cof, cof... Hay demasiado polvo aquí. Y todo porque el profesor nos vio discutiendo en el pasillo.", bg: "imagenes/Almacen_Gimnasio.jpg", sprite: "imagenes/Manhattan_Cafe_Triste.png", next: "almacen3" },
+            "almacen3": { location: "Almacén del Gimnasio", speaker: "Agnes Tachyon", text: "¡No se quejen! Miren toda esta chatarra... ¡Es oro puro para mis inventos! De hecho, traje a mi pequeño asistente robótico para 'limpiar'.", bg: "imagenes/Almacen_Gimnasio.jpg", sprite: "imagenes/Agnes_Tachyon_Emocionada.png", next: "almacen4" },
+            "almacen4": { location: "Almacén del Gimnasio", speaker: "{nombre}", text: "¿Asistente robótico? Tachyon, dime por favor que no construiste una aspiradora con un motor a reacción...", bg: "imagenes/Almacen_Gimnasio.jpg", sprite: "imagenes/Agnes_Tachyon_Sonrisa.png", next: "almacen5" },
+            "almacen5": { location: "Almacén del Gimnasio", speaker: "", text: "Antes de que pueda responder, el robot cilíndrico de Tachyon empieza a echar humo morado y a girar sin control por todo el cuarto.", bg: "imagenes/Almacen_Gimnasio.jpg", sprite: "", next: "almacen6" },
+            "almacen6": { location: "Almacén del Gimnasio", speaker: "Manhattan Cafe", text: "¡Ah! ¡Se dirige hacia las cajas de libros!", bg: "imagenes/Almacen_Gimnasio.jpg", sprite: "imagenes/Manhattan_Cafe_Confusion.png", next: "decision_almacen" },
+            "decision_almacen": {
+                location: "Almacén del Gimnasio", speaker: "Sistema", text: "¡El robot va a chocar! ¿Qué haces?", bg: "imagenes/Almacen_Gimnasio.jpg", sprite: "",
+                choices: [
+                    { text: "Lanzarte para atrapar el robot (Ruta Tachyon).", next: "accion_tachyon" },
+                    { text: "Cubrir a Cafe para que no le caiga el polvo (Ruta Cafe).", next: "accion_cafe" }
+                ]
+            },
+            
+            // --- ACCIÓN TACHYON ---
+            "accion_tachyon": { location: "Almacén del Gimnasio", speaker: "{nombre}", text: "¡Yo lo atrapo!", bg: "imagenes/Almacen_Gimnasio.jpg", sprite: "imagenes/Agnes_Tachyon_Sorprendida.png", next: "at1" },
+            "at1": { location: "Almacén del Gimnasio", speaker: "", text: "Me lanzo al suelo y agarro la máquina frenéticamente, apagando el interruptor de emergencia. Quedo cubierto de polvo.", bg: "imagenes/Almacen_Gimnasio.jpg", sprite: "", next: "at2" },
+            "at2": { location: "Almacén del Gimnasio", speaker: "Agnes Tachyon", text: "¡Fascinantes reflejos, {nombre}! Has salvado mi prototipo 04... Estoy impresionada.", bg: "imagenes/Almacen_Gimnasio.jpg", sprite: "imagenes/Agnes_Tachyon_Sonrisa.png", next: "at3" },
+            "at3": { location: "Almacén del Gimnasio", speaker: "", text: "Tachyon se agacha a mi lado y, con una sonrisa inusualmente suave, me limpia el polvo de la mejilla con su manga.", bg: "imagenes/Almacen_Gimnasio.jpg", sprite: "imagenes/Agnes_Tachyon_Sonrojada.png", next: "at4" },
+            "at4": { location: "Almacén del Gimnasio", speaker: "Manhattan Cafe", text: "Ejem... Si ya terminaron su momento, aún tenemos que ordenar esto.", bg: "imagenes/Almacen_Gimnasio.jpg", sprite: "imagenes/Manhattan_Cafe_Celosa.png", next: "dia3_azotea" },
+
+            // --- ACCIÓN CAFE ---
+            "accion_cafe": { location: "Almacén del Gimnasio", speaker: "{nombre}", text: "¡Cuidado, Cafe!", bg: "imagenes/Almacen_Gimnasio.jpg", sprite: "imagenes/Manhattan_Cafe_Confusion.png", next: "ac1" },
+            "ac1": { location: "Almacén del Gimnasio", speaker: "", text: "Abrazo a Cafe y la cubro con mi cuerpo justo antes de que el robot choque contra las cajas, levantando una nube de polvo inmensa.", bg: "imagenes/Almacen_Gimnasio.jpg", sprite: "", next: "ac2" },
+            "ac2": { location: "Almacén del Gimnasio", speaker: "Manhattan Cafe", text: "{nombre}... estás muy cerca...", bg: "imagenes/Almacen_Gimnasio.jpg", sprite: "imagenes/Manhattan_Cafe_Sonrojada.png", next: "ac3" },
+            "ac3": { location: "Almacén del Gimnasio", speaker: "Agnes Tachyon", text: "¡Ay, mi pobre prototipo! ¡Y ustedes dos, dejen de abrazarse en nombre de la ciencia, hay trabajo que hacer!", bg: "imagenes/Almacen_Gimnasio.jpg", sprite: "imagenes/Agnes_Tachyon_Emocionada.png", next: "ac4" },
+            "ac4": { location: "Almacén del Gimnasio", speaker: "Manhattan Cafe", text: "G-gracias... por protegerme.", bg: "imagenes/Almacen_Gimnasio.jpg", sprite: "imagenes/Manhattan_Cafe_Sonrojada.png", next: "dia3_azotea" },
+
+            // --- DÍA 3: EL FINAL EN LA AZOTEA ---
+            "dia3_azotea": { location: "Azotea de la Escuela", speaker: "", text: "DÍA DEL FESTIVAL - ATARDECER\nSubí a la azotea para escapar del ruido del festival. La brisa es agradable.", bg: "imagenes/Azotea_Escuela.jpg", sprite: "", next: "az2" },
+            "az2": { location: "Azotea de la Escuela", speaker: "Voz Conocida", text: "Sabía que te encontraría aquí, escondiéndote de las multitudes.", bg: "imagenes/Azotea_Escuela.jpg", sprite: "", next: "decision_final_chica" },
+            "decision_final_chica": {
+                location: "Azotea de la Escuela", speaker: "Sistema", text: "¿Quién subió a buscarte? (Elige tu ruta final)", bg: "imagenes/Azotea_Escuela.jpg", sprite: "",
+                choices: [
+                    { text: "Era Manhattan Cafe.", next: "final_romance_cafe" },
+                    { text: "Era Agnes Tachyon.", next: "final_romance_tachyon" }
+                ]
+            },
+
+            // --- FINAL CAFE ---
+            "final_romance_cafe": { location: "Azotea de la Escuela", speaker: "{nombre}", text: "Cafe... ¿No deberías estar en tu club?", bg: "imagenes/Azotea_Escuela.jpg", sprite: "imagenes/Manhattan_Cafe.png", next: "fc2" },
+            "fc2": { location: "Azotea de la Escuela", speaker: "Manhattan Cafe", text: "Terminó hace rato. Te estuve buscando... quería darte esto.", bg: "imagenes/Azotea_Escuela.jpg", sprite: "imagenes/Manhattan_Cafe_Sonrojada.png", next: "fc3" },
+            "fc3": { location: "Azotea de la Escuela", speaker: "", text: "Me entrega una taza de café en un termo. Está perfectamente preparado, justo como me gusta.", bg: "imagenes/Azotea_Escuela.jpg", sprite: "imagenes/Manhattan_Cafe_Feliz.png", next: "fc4" },
+            "fc4": { location: "Azotea de la Escuela", speaker: "Manhattan Cafe", text: "Últimamente... has pasado mucho tiempo con Tachyon. No es que me importe, pero...", bg: "imagenes/Azotea_Escuela.jpg", sprite: "imagenes/Manhattan_Cafe_Celosa.png", next: "fc5" },
+            "fc5": { location: "Azotea de la Escuela", speaker: "{nombre}", text: "Cafe, sabes que ella solo me usa de conejillo de indias. Pero yo prefiero estar aquí, tomando café contigo.", bg: "imagenes/Azotea_Escuela.jpg", sprite: "imagenes/Manhattan_Cafe_Sonrojada.png", next: "fc6" },
+            "fc6": { location: "Azotea de la Escuela", speaker: "Manhattan Cafe", text: "Más te vale... Quédate a mi lado un rato más, ¿sí?", bg: "imagenes/Azotea_Escuela.jpg", sprite: "imagenes/Manhattan_Cafe_Feliz.png", next: "fin_juego" },
+
+            // --- FINAL TACHYON ---
+            "final_romance_tachyon": { location: "Azotea de la Escuela", speaker: "{nombre}", text: "¿Tachyon? ¿No vas a volar ningún stand hoy?", bg: "imagenes/Azotea_Escuela.jpg", sprite: "imagenes/Agnes_Tachyon_Sonrisa.png", next: "ft2" },
+            "ft2": { location: "Azotea de la Escuela", speaker: "Agnes Tachyon", text: "¡Para tu información, mis experimentos de hoy fueron un éxito rotundo! Aunque... sentí que faltaba mi asistente número uno.", bg: "imagenes/Azotea_Escuela.jpg", sprite: "imagenes/Agnes_Tachyon_Sorprendida.png", next: "ft3" },
+            "ft3": { location: "Azotea de la Escuela", speaker: "", text: "Se acerca a la baranda y mira el horizonte. Por primera vez, no tiene una probeta en la mano.", bg: "imagenes/Azotea_Escuela.jpg", sprite: "imagenes/Agnes_Tachyon_Sonrisa.png", next: "ft4" },
+            "ft4": { location: "Azotea de la Escuela", speaker: "Agnes Tachyon", text: "¿Sabes, {nombre}? He analizado cientos de variables químicas, pero la reacción que causas en mi ritmo cardíaco... sigue siendo un misterio.", bg: "imagenes/Azotea_Escuela.jpg", sprite: "imagenes/Agnes_Tachyon_Sonrojada.png", next: "ft5" },
+            "ft5": { location: "Azotea de la Escuela", speaker: "{nombre}", text: "¿Es eso una confesión científica?", bg: "imagenes/Azotea_Escuela.jpg", sprite: "imagenes/Agnes_Tachyon_Sonrojada.png", next: "ft6" },
+            "ft6": { location: "Azotea de la Escuela", speaker: "Agnes Tachyon", text: "Llamalo como quieras. Pero a partir de hoy, serás mi sujeto de pruebas exclusivo. ¡No aceptaré un no por respuesta!", bg: "imagenes/Azotea_Escuela.jpg", sprite: "imagenes/Agnes_Tachyon_Emocionada.png", next: "fin_juego" },
+
+            "fin_juego": { location: "Fin", speaker: "", text: "FIN DEL JUEGO. ¡Gracias por jugar esta Novela Visual!", bg: "imagenes/Azotea_Escuela.jpg", sprite: "", next: null }
+        };
+        let currentNode = "start"; 
+        
+        const dialogueBox = document.getElementById('dialogue-box');
+        const nameBox = document.getElementById('name-box');
+        const locationBox = document.getElementById('location-box');
+        const bgElement = document.getElementById('background');
+        const charElement = document.getElementById('character');
+        const choicesContainer = document.getElementById('choices-container');
+
+        function startGame() {
+            const inputName = document.getElementById('player-name').value.trim();
+            if(inputName !== "") {
+                playerName = inputName;
+            }
+            
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('game-container').style.display = 'block';
+            
+            const audio = document.getElementById('bg-music');
+            audio.volume = 0.3; 
+            audio.play().catch(e => console.log("Autoplay bloqueado."));
+
+            renderScene(currentNode);
+        }
+
+        function renderScene(nodeId) {
+            if (!nodeId) return;
+            const node = story[nodeId];
+
+            let currentText = node.text.replace(/{nombre}/g, playerName);
+            let currentSpeaker = node.speaker.replace(/{nombre}/g, playerName);
+
+            // Mostrar Ubicación
+            if (node.location) {
+                locationBox.style.display = "block";
+                locationBox.innerText = node.location;
+            } else {
+                locationBox.style.display = "none";
+            }
+
+            // Mostrar Nombre
+            if (currentSpeaker) {
+                nameBox.style.display = "block";
+                nameBox.innerText = currentSpeaker;
+            } else {
+                nameBox.style.display = "none";
+            }
+
+            dialogueBox.innerText = currentText;
+
+            if (node.bg) {
+                bgElement.style.backgroundImage = `url('${node.bg}')`;
+            }
+
+            if (node.sprite) {
+                charElement.src = node.sprite;
+                charElement.style.display = "block";
+            } else {
+                charElement.style.display = "none";
+            }
+
+            if (node.choices) {
+                dialogueBox.style.pointerEvents = "none"; 
+                choicesContainer.innerHTML = ""; 
+                choicesContainer.style.display = "flex";
+
+                node.choices.forEach(choice => {
+                    const btn = document.createElement('div');
+                    btn.className = 'choice-btn';
+                    btn.innerText = choice.text.replace(/{nombre}/g, playerName);
+                    btn.onclick = () => {
+                        choicesContainer.style.display = "none";
+                        dialogueBox.style.pointerEvents = "auto";
+                        currentNode = choice.next;
+                        renderScene(currentNode);
+                    };
+                    choicesContainer.appendChild(btn);
+                });
+            } else {
+                choicesContainer.style.display = "none";
+            }
+        }
+
+        function advanceStory() {
+            const node = story[currentNode];
+            if (node && node.next && !node.choices) {
+                currentNode = node.next;
+                renderScene(currentNode);
+            }
+        }
+    </script>
+</body>
+</html>
